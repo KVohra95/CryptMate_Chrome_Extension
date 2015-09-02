@@ -2,10 +2,112 @@ var url = "";
 var domain = "";
 var token = "";
 var newpassword = "";
-var passwordform = document.getElementById('password');
-var newpasswordform = document.getElementById('newpassword');
-var confirmpasswordform = document.getElementById('confirmpassword');
-var generatedpasswordform = document.getElementById('generatedpassword');
+var subscriptionended = false;
+var params = {};
+var passwordform = $("#password");
+var newpasswordform = $("#newpassword");
+var confirmpasswordform = $("#confirmpassword");
+var generatedpasswordform = $("#generatedpassword");
+var createnewpassworddiv = $("#createnewpassword");
+var generatepassworddiv = $("#generatepassword");
+var showpassworddiv = $("#showpassword");
+var errordiv = $("#error");
+var formsdiv = $("#forms");
+
+$(document).ready(function() {
+
+    $("form").on('submit', function (e) {
+        switch (e.target.id) {
+            case "createnewpassword":
+                var newpassword = document.getElementById('newpassword').value;
+                var confirmpassword = document.getElementById('confirmpassword').value;
+                if (newpassword == confirmpassword) {
+                    params =
+                    {
+                        token: token,
+                        password: newpassword,
+                        domain: domain,
+                        newpassword: 1
+                    };
+
+                    console.log(params);
+                    $.ajax({
+                        type: "POST",
+                        url: "https://www.cryptmate.com/processing/rest.php",
+                        data: params,
+                        success: function (data, status) {
+                            var returndata = JSON.parse(data);
+                            switch (returndata.returntype) {
+                                case "error":
+                                    error(returndata.error);
+                                    break;
+                                case "password":
+                                    clearAll();
+                                    createnewpassworddiv.hide();
+                                    generatepassworddiv.hide();
+                                    showpassworddiv.show();
+                                    generatedpasswordform.val(returndata.hash);
+                                    break;
+                            }
+                        },
+                        error: function () {
+                            error("Internet connection failure, please try again when internet connection is active")
+                        }
+                    });
+                }
+                else {
+                    error("Passwords do not match");
+                }
+                break;
+            case "generatepassword":
+                var password = document.getElementById('password').value;
+                params =
+                {
+                    token: token,
+                    password: password,
+                    domain: domain,
+                    newpassword: 0
+                };
+
+                $.ajax({
+                    type: "POST",
+                    url: "https://www.cryptmate.com/processing/rest.php",
+                    data: params,
+                    success: function (data, status) {
+                        var returndata = JSON.parse(data);
+                        switch (returndata.returntype) {
+                            case "error":
+                                error(returndata.error);
+                                break;
+                            case "password":
+                                clearAll();
+                                createnewpassworddiv.hide();
+                                generatepassworddiv.hide();
+                                showpassworddiv.show();
+                                generatedpasswordform.val(returndata.hash);
+                                break;
+                        }
+                    },
+                    error: function () {
+                        error("Internet connection failure, please try again when internet connection is active")
+                    }
+                });
+
+                break;
+        }
+        return false;
+    });
+
+});
+
+
+document.getElementById("copy").addEventListener("click", function ()
+{
+    var copyDiv = document.getElementById("generatedpassword");
+    copyDiv.focus();
+    document.execCommand("SelectAll");
+    document.execCommand("Copy", false, null);
+});
 
 chrome.tabs.query({'active': true, 'lastFocusedWindow': true, 'windowId': chrome.windows.WINDOW_ID_CURRENT}, function (tabs)
 {
@@ -18,23 +120,16 @@ chrome.tabs.query({'active': true, 'lastFocusedWindow': true, 'windowId': chrome
                     if (data.subscriptionended == true)
                     {
                         clearAll();
-                        $("#forms").hide();
-                        $("#loginprompt").hide();
-                        $("#subscriptionended").show();
-
+                        error("Subscription has ended, please extend subscription to continue using the app");
                     }
                     else if (typeof token == 'undefined')
                     {
                         clearAll();
-                        $("#subscriptionended").hide();
-                        $("#forms").hide();
-                        $("#loginprompt").show();
+                        error("Not logged in, please log in from the addon options menu");
                     }
                     else
                     {
                         clearAll();
-                        $("#subscriptionended").hide();
-                        $("#loginprompt").hide();
                         $("#forms").show();
                         showForms();
                     }
@@ -43,7 +138,7 @@ chrome.tabs.query({'active': true, 'lastFocusedWindow': true, 'windowId': chrome
 
 function showForms()
 {
-    var params =
+    params =
     {
         token: token,
         domain: domain
@@ -64,13 +159,12 @@ function showForms()
                         chrome.storage.sync.remove('token', function()
                         {
                             clearAll();
-                            $("#forms").hide();
-                            $("#loginprompt").show();
+                            error("Logged in account not recognised, please log in again from the addon options menu");
                         });
                     }
                     else
                     {
-                        alert(returndata.error);
+                        error(returndata.error);
                     }
                     break;
 
@@ -79,16 +173,18 @@ function showForms()
                     if (newpassword)
                     {
                         clearAll();
-                        $("#generatepassword").hide();
-                        $("#showpassword").hide();
-                        $("#createnewpassword").show();
+                        errordiv.hide();
+                        generatepassworddiv.hide();
+                        showpassworddiv.hide();
+                        createnewpassworddiv.show();
                     }
                     else
                     {
                         clearAll();
-                        $("#createnewpassword").hide();
-                        $("#showpassword").hide();
-                        $("#generatepassword").show();
+                        errordiv.hide();
+                        createnewpassworddiv.hide();
+                        showpassworddiv.hide();
+                        generatepassworddiv.show();
                     }
                     break;
             }
@@ -97,97 +193,18 @@ function showForms()
     });
 }
 
-$("form").on('submit', function (e)
-{
-    switch (e.target.id)
-    {
-        case "createnewpassword":
-            var newpassword = document.getElementById('newpassword').value;
-            var confirmpassword = document.getElementById('confirmpassword').value;
-            if (newpassword == confirmpassword)
-            {
-                var params =
-                {
-                    token: token,
-                    password: newpassword,
-                    domain: domain,
-                    newpassword: true
-                };
-
-                console.log(params);
-                $.ajax({
-                    type: "POST",
-                    url: "https://www.cryptmate.com/processing/rest.php",
-                    data: params,
-                    success: function(data, status)
-                    {
-                        var returndata = JSON.parse(data);
-                        switch (returndata.returntype)
-                        {
-                            case "error":
-                                alert(returndata.error);
-                                break;
-                            case "password":
-                                clearAll();
-                                $("#createnewpassword").hide();
-                                $("#generatepassword").hide();
-                                $("#showpassword").show();
-                                $("#generatedpassword").val(returndata.hash);
-                                break;
-                        }
-                    },
-                    error: function(){
-                    }
-                });
-            }
-            else
-            {
-                alert("Passwords do not match");
-            }
-            break;
-        case "generatepassword":
-            var password = document.getElementById('password').value;
-            var params =
-            {
-                token: token,
-                password: password,
-                domain: domain,
-                newpassword: false
-            };
-
-            $.ajax({
-                type: "POST",
-                url: "https://www.cryptmate.com/processing/rest.php",
-                data: params,
-                success: function(data, status)
-                {
-                    var returndata = JSON.parse(data);
-                    switch (returndata.returntype)
-                    {
-                        case "error":
-                            alert(returndata.error);
-                            break;
-                        case "password":
-                            clearAll();
-                            $("#createnewpassword").hide();
-                            $("#generatepassword").hide();
-                            $("#showpassword").show();
-                            $("#generatedpassword").val(returndata.hash);
-                            break;
-                    }
-                },
-                error: function(){}
-            });
-
-            break;
-    }
-    return false;
-});
-
 function clearAll()
 {
     passwordform.value = "";
     newpasswordform.value = "";
     confirmpasswordform.value = "";
     generatedpasswordform.value = "";
+}
+
+function error(message)
+{
+    clearAll();
+    errordiv.html(message);
+    formsdiv.hide();
+    errordiv.show();
 }

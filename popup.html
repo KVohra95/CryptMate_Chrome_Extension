@@ -8,31 +8,27 @@
           <p>loading...</p>
       </div>
 
-      <div id="main" style="z-index: 1; position: fixed; top: 0; width: 200px; height: 100px;">
-          <div id="forms" style="display: none; position: fixed; top: 0;">
-              <form id="generatepassword" style="display: none;">
-                  <input type="text" id="password">
+      <div id="main" style="z-index: 1; position: fixed; top: 0; width: 200px; height: 100px; background: white;">
+          <div id="forms" style="display: none; position: fixed; top: 0; background: white;">
+              <form id="generatepassword" style="display: none; background: white;">
+                  <input type="password" id="password">
                   <input type="submit" value="Submit">
               </form>
 
-              <form id="createnewpassword" style="display: none;">
-                  <input type="text" id="newpassword">
-                  <input type="text" id="confirmpassword">
+              <form id="createnewpassword" style="display: none; background: white;">
+                  <input type="password" id="newpassword">
+                  <input type="password" id="confirmpassword">
                   <input type="submit" value="Submit">
               </form>
 
-              <form id="showpassword" style="display: none;">
+              <form id="showpassword" style="display: none; background: white;">
                   <input type="text" readonly id="generatedpassword">
+                  <button id="copy">Copy</button>
               </form>
           </div>
 
-          <div id="loginprompt" style="display: none;">
-              <p>LOG IN</p>
-          </div>
+          <div id="error" style="display: none; position: fixed; top: 0; background: white;"></div>
 
-          <div id="subscriptionended" style="display: none;">
-              <p>SUBSCRIPTION ENDED</p>
-          </div>
       </div>
 
       <script type="text/javascript" src="jquery.min.js"></script>
