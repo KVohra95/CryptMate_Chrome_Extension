@@ -13,24 +13,27 @@ var generatepassworddiv = $("#generatepassword");
 var showpassworddiv = $("#showpassword");
 var errordiv = $("#error");
 var formsdiv = $("#forms");
+var linkdomains = $("#linkdomains");
 
 $(document).ready(function() {
 
     $("form").on('submit', function (e) {
         switch (e.target.id) {
             case "createnewpassword":
-                var newpassword = document.getElementById('newpassword').value;
-                var confirmpassword = document.getElementById('confirmpassword').value;
+                var newpassword = newpasswordform.val();
+                var confirmpassword = confirmpasswordform.val();
+                var linkeddomain = linkdomains.find("option:selected").text();
+
                 if (newpassword == confirmpassword) {
                     params =
                     {
                         token: token,
                         password: newpassword,
                         domain: domain,
-                        newpassword: 1
+                        newpassword: 1,
+                        linkeddomain: linkeddomain
                     };
 
-                    console.log(params);
                     $.ajax({
                         type: "POST",
                         url: "https://www.cryptmate.com/processing/rest.php",
@@ -60,7 +63,7 @@ $(document).ready(function() {
                 }
                 break;
             case "generatepassword":
-                var password = document.getElementById('password').value;
+                var password = passwordform.val();
                 params =
                 {
                     token: token,
@@ -103,7 +106,7 @@ $(document).ready(function() {
 
 document.getElementById("copy").addEventListener("click", function ()
 {
-    var copyDiv = document.getElementById("generatedpassword");
+    var copyDiv = generatedpasswordform.val();
     copyDiv.focus();
     document.execCommand("SelectAll");
     document.execCommand("Copy", false, null);
@@ -169,14 +172,25 @@ function showForms()
                     break;
 
                 case "newpassword":
-                    newpassword = returndata.newpassword;
-                    if (newpassword)
+                    if (returndata.newpassword)
                     {
                         clearAll();
                         errordiv.hide();
                         generatepassworddiv.hide();
                         showpassworddiv.hide();
                         createnewpassworddiv.show();
+
+                        linkdomains.append($('<option></option>').val("").html(""));
+
+                        var keyeddomains = returndata.keyeddomains;
+
+                        $.each(keyeddomains, function(i)
+                        {
+                            linkdomains.append
+                            (
+                                $('<option></option>').val(keyeddomains[i]).html(keyeddomains[i])
+                            );
+                        });
                     }
                     else
                     {
